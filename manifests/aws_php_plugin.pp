@@ -38,18 +38,36 @@ class memcached::aws_php_plugin (
       content => "puppet:///modules/memcached/tmp/AmazonElasticCacheClusterClient-${$version}-${$php_version}-${$arch}.tgz",
       mode    => '0644',
       owner   => root,
-      group   => root,
-      notify  => Exec['pecl_install_memcached'];
+      group   => root;
   }
 
-  php::extension { '/tmp/AwsElasticCacheClusterClient.tgz':
-    ensure => 'installed',
-    provider => 'pecl'
+  exec { 'pecl_install_memcached':
+    command => '/usr/bin/pecl install /tmp/AwsElasticCacheClusterClient.tgz',
+    require => [
+      Class['::php::pear'], # TODO figure out what to put here for the oldphp module
+      Class['::php::dev'], # TODO figure out what to put here for the oldphp module
+      File['/tmp/AwsElasticCacheClusterClient.tgz']
+    ]
   }
-  # exec { 'pecl_install_memcached':
-  #   command => '/usr/bin/pecl install /tmp/AwsElasticCacheClusterClient.tgz',
-  #   require => Package['pecl'],
-  #   notify  => Service['php5-fpm']
-  # }
+
+  $config_root_ini = pick_default($::php::config_root_ini, $::php::params::config_root_ini)
+  ::php::config { 'memcached':
+    file    => "${config_root_ini}/memcached.ini",
+    config  => {
+      'extension' => 'amazon-elasticache-cluster-client.so'
+    },
+    require => Exec['pecl_install_memcached'],
+  }
+
+  # Ubuntu/Debian systems use the mods-available folder. We need to enable
+  # settings files ourselves with php5enmod command.
+  $ext_tool_enable   = pick_default($::php::ext_tool_enable, $::php::params::ext_tool_enable)
+  $ext_tool_query    = pick_default($::php::ext_tool_query, $::php::params::ext_tool_query)
+
+  exec { "${ext_tool_enable} -s ALL memcached":
+    onlyif  => "${ext_tool_query} -s cli -m memcached | /bin/grep 'No module matches memcached'",
+    require => ::Php::Config['memcached'],
+  }
+
 
 }
