@@ -24,7 +24,19 @@ class memcached::aws_php_plugin (
   # Take out the dots of the version number to match the package name
   $real_php_version = regsubst($php_version, '\.', '', 'G')
 
-  $version = '1.0.1'
+  $version = $real_php_version ? {
+    '56' => '1.0.0',
+    '70' => '1.0.0',
+    default => '1.0.1'
+  }
+
+  # Version of the .so file
+  $so_version = $real_php_version ? {
+    '55' => '1.0.0',
+    '56' => '1.0.0',
+    default => '1.0.1'
+  }
+
   $arch = $::architecture ? {
     'x86_64' => '64bit',
     'amd64' => '64bit',
@@ -54,7 +66,7 @@ class memcached::aws_php_plugin (
 
   if $oldphp {
     exec { 'pecl_install_memcached':
-      command => "/bin/tar -xvf /tmp/AwsElasticCacheClusterClient.tgz -C /tmp/ AmazonElastiCacheClusterClient-1.0.0/amazon-elasticache-cluster-client.so && /bin/mv /tmp/AmazonElastiCacheClusterClient-1.0.0/amazon-elasticache-cluster-client.so /usr/lib/php5/20121212/amazon-elasticache-cluster-client-${$version}-${$real_php_version}.so",
+      command => "/bin/tar -xvf /tmp/AwsElasticCacheClusterClient.tgz -C /tmp/ AmazonElastiCacheClusterClient-${$so_version}/amazon-elasticache-cluster-client.so && /bin/mv /tmp/AmazonElastiCacheClusterClient-${$so_version}/amazon-elasticache-cluster-client.so /usr/lib/php5/20121212/amazon-elasticache-cluster-client-${$version}-${$real_php_version}.so",
       require => File['/tmp/AwsElasticCacheClusterClient.tgz'],
       creates => "/usr/lib/php5/20121212/amazon-elasticache-cluster-client-${$version}-${$real_php_version}.so"
     }
