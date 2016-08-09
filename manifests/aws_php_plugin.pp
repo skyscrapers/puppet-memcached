@@ -35,7 +35,7 @@ class memcached::aws_php_plugin (
   file {
     '/tmp/AwsElasticCacheClusterClient.tgz':
       ensure  => file,
-      content => "puppet:///modules/memcached/tmp/AmazonElasticCacheClusterClient-${$version}-${$php_version}-${$arch}.tgz",
+      source  => "puppet:///modules/memcached/tmp/AmazonElastiCacheClusterClient-${$version}-${$php_version}-${$arch}.tgz",
       mode    => '0644',
       owner   => root,
       group   => root;
