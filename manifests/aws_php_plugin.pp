@@ -104,5 +104,12 @@ class memcached::aws_php_plugin (
     require => $require,
   }
 
+  if defined(Service['php-fpm']) {
+    Exec["${ext_tool_enable} -s ALL memcached"] ~> Service['php-fpm']
+  }
+
+  if defined(Service['php5-fpm']) {
+    Exec["${ext_tool_enable} -s ALL memcached"] ~> Service['php5-fpm']
+  }
 
 }
