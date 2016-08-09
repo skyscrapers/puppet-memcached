@@ -27,6 +27,12 @@ class memcached::aws_php_plugin (
     default => false
   }
 
+  $oldphp = defined(Class['oldphp'])
+
+  if $oldphp and !defined(Class['php::params']) {
+    include ::php::params
+  }
+
   # TODO
   # validate($version)
   # validate($arch)
@@ -43,14 +49,26 @@ class memcached::aws_php_plugin (
 
   exec { 'pecl_install_memcached':
     command => '/usr/bin/pecl install /tmp/AwsElasticCacheClusterClient.tgz',
-    require => [
-      Class['::php::pear'], # TODO figure out what to put here for the oldphp module
-      Class['::php::dev'], # TODO figure out what to put here for the oldphp module
-      File['/tmp/AwsElasticCacheClusterClient.tgz']
-    ]
+    require => $oldphp ? {
+      true => [
+        Package['php-pear'],
+        Package['php5-dev'],
+        File['/tmp/AwsElasticCacheClusterClient.tgz']
+      ],
+      false => [
+        Class['::php::pear'],
+        Class['::php::dev'],
+        File['/tmp/AwsElasticCacheClusterClient.tgz']
+      ]
+    }
   }
 
-  $config_root_ini = pick_default($::php::config_root_ini, $::php::params::config_root_ini)
+  if $oldphp {
+    $config_root_ini = '/etc/php5/mods-available'
+  } else {
+    $config_root_ini = pick_default($::php::config_root_ini, $::php::params::config_root_ini)
+  }
+
   ::php::config { 'memcached':
     file    => "${config_root_ini}/memcached.ini",
     config  => {
