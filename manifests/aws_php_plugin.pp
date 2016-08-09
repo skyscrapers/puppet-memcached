@@ -49,7 +49,7 @@ class memcached::aws_php_plugin (
 
   if $oldphp {
     exec { 'pecl_install_memcached':
-      command => "/bin/tar -xvf /tmp/AwsElasticCacheClusterClient.tgz AmazonElastiCacheClusterClient-1.0.0/amazon-elasticache-cluster-client.so -C /tmp/ && mv /tmp/AmazonElastiCacheClusterClient-1.0.0/amazon-elasticache-cluster-client.so /usr/lib/php5/20121212/amazon-elasticache-cluster-client-${$version}-${$php_version}.so",
+      command => "/bin/tar -xvf /tmp/AwsElasticCacheClusterClient.tgz -C /tmp/ AmazonElastiCacheClusterClient-1.0.0/amazon-elasticache-cluster-client.so && /bin/mv /tmp/AmazonElastiCacheClusterClient-1.0.0/amazon-elasticache-cluster-client.so /usr/lib/php5/20121212/amazon-elasticache-cluster-client-${$version}-${$php_version}.so",
       require => File['/tmp/AwsElasticCacheClusterClient.tgz'],
       creates => "/usr/lib/php5/20121212/amazon-elasticache-cluster-client-${$version}-${$php_version}.so"
     }
