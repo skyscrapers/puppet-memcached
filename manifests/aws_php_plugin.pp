@@ -47,15 +47,16 @@ class memcached::aws_php_plugin (
       group   => root;
   }
 
-  exec { 'pecl_install_memcached':
-    command => '/usr/bin/pecl install /tmp/AwsElasticCacheClusterClient.tgz',
-    require => $oldphp ? {
-      true => [
-        Package['php-pear'],
-        Package['php5-dev'],
-        File['/tmp/AwsElasticCacheClusterClient.tgz']
-      ],
-      false => [
+  if $oldphp {
+    exec { 'pecl_install_memcached':
+      command => "/bin/tar -xvf /tmp/AwsElasticCacheClusterClient.tgz AmazonElastiCacheClusterClient-1.0.0/amazon-elasticache-cluster-client.so -C /tmp/ && mv /tmp/AmazonElastiCacheClusterClient-1.0.0/amazon-elasticache-cluster-client.so /usr/lib/php5/20121212/amazon-elasticache-cluster-client-${$version}-${$php_version}.so",
+      require => File['/tmp/AwsElasticCacheClusterClient.tgz'],
+      creates => "/usr/lib/php5/20121212/amazon-elasticache-cluster-client-${$version}-${$php_version}.so"
+    }
+  } else {
+    exec { 'pecl_install_memcached':
+      command => '/usr/bin/pecl upgrade /tmp/AwsElasticCacheClusterClient.tgz',
+      require => [
         Class['::php::pear'],
         Class['::php::dev'],
         File['/tmp/AwsElasticCacheClusterClient.tgz']
@@ -72,7 +73,7 @@ class memcached::aws_php_plugin (
   ::php::config { 'memcached':
     file    => "${config_root_ini}/memcached.ini",
     config  => {
-      'extension' => 'amazon-elasticache-cluster-client.so'
+      'extension' => "amazon-elasticache-cluster-client-${$version}-${$php_version}.so"
     },
     require => Exec['pecl_install_memcached'],
   }
