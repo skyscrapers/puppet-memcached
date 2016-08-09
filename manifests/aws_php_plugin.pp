@@ -38,6 +38,11 @@ class memcached::aws_php_plugin (
   # validate($arch)
   # validate($php_version)
 
+  package {
+    'php5-memcached':
+      ensure => absent
+  }
+
   file {
     '/tmp/AwsElasticCacheClusterClient.tgz':
       ensure  => file,
