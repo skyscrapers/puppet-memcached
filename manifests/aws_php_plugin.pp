@@ -78,14 +78,30 @@ class memcached::aws_php_plugin (
     require => Exec['pecl_install_memcached'],
   }
 
+  if $oldphp {
+    if !defined(Package['php5-common']) {
+      package { 'php5-common':
+        ensure => installed
+      }
+    }
+
+    $ext_tool_enable  = '/usr/sbin/php5enmod'
+    $ext_tool_query   = '/usr/sbin/php5query'
+    $require = [
+      ::Php::Config['memcached'],
+      Package['php5-common'],
+    ]
+  } else {
+    $ext_tool_enable  = pick_default($::php::ext_tool_enable, $::php::params::ext_tool_enable)
+    $ext_tool_query   = pick_default($::php::ext_tool_query, $::php::params::ext_tool_query)
+    $require          = ::Php::Config['memcached']
+  }
+
   # Ubuntu/Debian systems use the mods-available folder. We need to enable
   # settings files ourselves with php5enmod command.
-  $ext_tool_enable   = pick_default($::php::ext_tool_enable, $::php::params::ext_tool_enable)
-  $ext_tool_query    = pick_default($::php::ext_tool_query, $::php::params::ext_tool_query)
-
   exec { "${ext_tool_enable} -s ALL memcached":
     onlyif  => "${ext_tool_query} -s cli -m memcached | /bin/grep 'No module matches memcached'",
-    require => ::Php::Config['memcached'],
+    require => $require,
   }
 
 
