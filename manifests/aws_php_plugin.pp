@@ -65,20 +65,23 @@ class memcached::aws_php_plugin (
   }
 
   if $oldphp {
+    $so_name = "amazon-elasticache-cluster-client-${$version}-${$real_php_version}.so"
     exec { 'pecl_install_memcached':
-      command => "/bin/tar -xvf /tmp/AwsElasticCacheClusterClient.tgz -C /tmp/ AmazonElastiCacheClusterClient-${$so_version}/amazon-elasticache-cluster-client.so && /bin/mv /tmp/AmazonElastiCacheClusterClient-${$so_version}/amazon-elasticache-cluster-client.so /usr/lib/php5/20121212/amazon-elasticache-cluster-client-${$version}-${$real_php_version}.so",
+      command => "/bin/tar -xvf /tmp/AwsElasticCacheClusterClient.tgz -C /tmp/ AmazonElastiCacheClusterClient-${$so_version}/amazon-elasticache-cluster-client.so && /bin/mv /tmp/AmazonElastiCacheClusterClient-${$so_version}/amazon-elasticache-cluster-client.so /usr/lib/php5/20121212/${$so_name}",
       require => File['/tmp/AwsElasticCacheClusterClient.tgz'],
-      creates => "/usr/lib/php5/20121212/amazon-elasticache-cluster-client-${$version}-${$real_php_version}.so"
+      creates => "/usr/lib/php5/20121212/${$so_name}"
     }
   } elsif $real_php_version == '70' {
+    $so_name = "amazon-elasticache-cluster-client-${$version}-${$real_php_version}.so"
     # PHP 7.0 has a custom install "method".
     # See: http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/Appendix.PHPAutoDiscoverySetup.html#Appendix.PHPAutoDiscoverySetup.Installing.PHP7x
     exec { 'pecl_install_memcached':
-      command => "/bin/tar -xvf /tmp/AwsElasticCacheClusterClient.tgz -C /tmp/ artifact/amazon-elasticache-cluster-client.so && /bin/mv /tmp/artifact/amazon-elasticache-cluster-client.so /usr/lib/php/20151012/amazon-elasticache-cluster-client-${$version}-${$real_php_version}.so",
+      command => "/bin/tar -xvf /tmp/AwsElasticCacheClusterClient.tgz -C /tmp/ artifact/amazon-elasticache-cluster-client.so && /bin/mv /tmp/artifact/amazon-elasticache-cluster-client.so /usr/lib/php/20151012/${$so_name}",
       require => File['/tmp/AwsElasticCacheClusterClient.tgz'],
-      creates => "/usr/lib/php/20151012/amazon-elasticache-cluster-client-${$version}-${$real_php_version}.so"
+      creates => "/usr/lib/php/20151012/${$so_name}"
     }
   } else {
+    $so_name = "amazon-elasticache-cluster-client.so"
     exec { 'pecl_install_memcached':
       command => '/usr/bin/pecl upgrade /tmp/AwsElasticCacheClusterClient.tgz',
       require => [
@@ -98,7 +101,7 @@ class memcached::aws_php_plugin (
   ::php::config { 'memcached':
     file    => "${config_root_ini}/memcached.ini",
     config  => {
-      'extension' => "amazon-elasticache-cluster-client-${$version}-${$real_php_version}.so"
+      'extension' => $so_name
     },
     require => Exec['pecl_install_memcached'],
   }
