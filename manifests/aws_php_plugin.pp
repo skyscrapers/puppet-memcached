@@ -27,6 +27,7 @@ class memcached::aws_php_plugin (
   $version = $real_php_version ? {
     '56' => '1.0.0',
     '70' => '1.0.0',
+    '71' => '1.0.0',
     default => '1.0.1'
   }
 
@@ -71,7 +72,7 @@ class memcached::aws_php_plugin (
       require => File['/tmp/AwsElasticCacheClusterClient.tgz'],
       creates => "/usr/lib/php5/20121212/${$so_name}"
     }
-  } elsif $real_php_version == '70' {
+  } elsif ($real_php_version == '70') or ($real_php_version == '71')  {
     $so_name = "amazon-elasticache-cluster-client-${$version}-${$real_php_version}.so"
     # PHP 7.0 has a custom install "method".
     # See: http://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/Appendix.PHPAutoDiscoverySetup.html#Appendix.PHPAutoDiscoverySetup.Installing.PHP7x
